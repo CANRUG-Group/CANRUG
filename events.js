@@ -31,6 +31,14 @@ function linkifyText(text) {
   );
 }
 
+// Format multi-paragraph plain text into paragraph-wrapped HTML with linkified URLs
+function formatDescription(text) {
+  const paragraphs = text.trim().split(/\n{2,}/); // Split on double line breaks
+  return paragraphs.map(p =>
+    `<p>${linkifyText(p.replace(/\n/g, ' '))}</p>`
+  ).join('');
+}
+
 // Render a list of events into a container
 function renderEvents(container, events) {
   if (!events || events.length === 0) {
@@ -42,22 +50,7 @@ function renderEvents(container, events) {
     const start = event.start.dateTime || event.start.date;
     const end = event.end.dateTime || event.end.date;
     const location = event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : '';
-
-    let description = '';
-    let registrationLink = '';
-
-    if (event.description) {
-      const urls = [...event.description.matchAll(/https?:\/\/[^\s]+/g)];
-      const firstUrl = urls.length > 0 ? urls[0][0] : null;
-
-      // Display description with clickable links
-      description = `<p>${linkifyText(event.description)}</p>`;
-
-      // Separate registration link only if first URL is available
-      if (firstUrl) {
-        registrationLink = `<p><a href="${firstUrl}" target="_blank" rel="noopener noreferrer">Register Here</a></p>`;
-      }
-    }
+    const description = event.description ? formatDescription(event.description) : '';
 
     return `
       <article>
@@ -65,7 +58,6 @@ function renderEvents(container, events) {
         <p><strong>When:</strong> ${formatDateTime(start)} - ${formatDateTime(end)}</p>
         ${location}
         ${description}
-        ${registrationLink}
       </article>
     `;
   }).join('');
@@ -108,7 +100,9 @@ async function loadEvents() {
 
     if (pastContainer) {
       // Sort past events by most recent first
-      pastEvents.sort((a, b) => new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date));
+      pastEvents.sort((a, b) =>
+        new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date)
+      );
       renderEvents(pastContainer, pastEvents);
     }
   } catch (error) {

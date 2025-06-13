@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Past Events – CANRUG</title>
-    <link rel="stylesheet" href="simple.css">
+    <link rel="stylesheet" href="simple.css" />
 </head>
 <body>
     <header>
@@ -22,6 +22,11 @@
             <h2 id="past-events-heading">Past Events</h2>
             <p>Here you'll find information and materials from previous CANRUG meetings and events.</p>
 
+            <!-- Container for dynamic past events -->
+            <div id="past-events">Loading past events...</div>
+
+            <!-- Optional: keep or remove this static example event -->
+            <!--
             <article>
                 <h3>First Annual General Meeting (AGM) – May 8, 2025</h3>
                 <p>CANRUG’s first AGM was held online via Zoom on <strong>Thursday, May 8, 2025</strong>.</p>
@@ -37,13 +42,15 @@
                        class="button">View Agenda</a>
                 </p>
             </article>
-
-            <!-- Add more past events below as needed -->
+            -->
         </section>
     </main>
 
     <footer>
         <p>&copy; 2024 CANRUG</p>
     </footer>
+
+    <!-- Include events.js to load past events dynamically -->
+    <script src="events.js"></script>
 </body>
 </html>

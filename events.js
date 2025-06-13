@@ -9,13 +9,16 @@ const pastContainer = document.getElementById('past-events');
 // Base URL for Google Calendar API events list endpoint
 const EVENTS_API_URL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`;
 
-// Format ISO date to readable string
+// Get user's browser time zone
+const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// Format ISO date to readable string with user's timezone
 function formatDateTime(dateStr) {
   const options = {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
   };
-  return new Date(dateStr).toLocaleString(undefined, options);
+  return new Date(dateStr).toLocaleString(undefined, {...options, timeZone: userTimeZone});
 }
 
 // Render a list of events into the given container
@@ -30,9 +33,8 @@ function renderEvents(container, events) {
     const end = event.end.dateTime || event.end.date;
     const location = event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : '';
 
-    // The description from API includes HTML entities and tags escaped as unicode.
-    // Insert it directly as innerHTML to render the links and formatting correctly.
-    const descriptionHTML = event.description ? `<p>${event.description}</p>` : '';
+    // Insert description as HTML to properly render links and line breaks
+    const descriptionHTML = event.description ? `<div>${event.description}</div>` : '';
 
     return `
       <article>

@@ -23,17 +23,23 @@ function formatDateTime(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, options);
 }
 
-// Convert raw URLs in text into clickable HTML links
+// Strip invalid HTML and linkify URLs
 function linkifyText(text) {
   if (!text) return '';
-  return text.replace(/(https?:\/\/[^\s]+)/g, url =>
+
+  // Remove broken HTML tags that may be present in raw Google Calendar description
+  const cleanText = text.replace(/<\/?[^>]+(>|$)/g, '');
+
+  // Replace URLs with anchor tags
+  return cleanText.replace(/(https?:\/\/[^\s]+)/g, url =>
     `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
   );
 }
 
 // Format multi-paragraph plain text into paragraph-wrapped HTML with linkified URLs
 function formatDescription(text) {
-  const paragraphs = text.trim().split(/\n{2,}/); // Split on double line breaks
+  if (!text) return '';
+  const paragraphs = text.trim().split(/\n{2,}/);
   return paragraphs.map(p =>
     `<p>${linkifyText(p.replace(/\n/g, ' '))}</p>`
   ).join('');
@@ -50,7 +56,7 @@ function renderEvents(container, events) {
     const start = event.start.dateTime || event.start.date;
     const end = event.end.dateTime || event.end.date;
     const location = event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : '';
-    const description = event.description ? formatDescription(event.description) : '';
+    const description = formatDescription(event.description || '');
 
     return `
       <article>
@@ -80,8 +86,8 @@ async function fetchEvents() {
 async function loadEvents() {
   try {
     const events = await fetchEvents();
-
     const now = new Date();
+
     const upcomingEvents = [];
     const pastEvents = [];
 
@@ -99,7 +105,6 @@ async function loadEvents() {
     }
 
     if (pastContainer) {
-      // Sort past events by most recent first
       pastEvents.sort((a, b) =>
         new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date)
       );

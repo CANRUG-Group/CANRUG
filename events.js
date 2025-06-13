@@ -1,8 +1,8 @@
 // events.js
 
 // Replace these with your actual calendar ID and API key
-const CALENDAR_ID = 'your_calendar_id@group.calendar.google.com';
-const API_KEY = 'YOUR_GOOGLE_API_KEY';
+const CALENDAR_ID = 'canrugroup@gmail.com';
+const API_KEY = 'AIzaSyB5OeElttTcYlFt52JSKJqHMXoBHtQYhdQ';
 
 // ISO date/time now, used for filtering
 const nowISO = new Date().toISOString();

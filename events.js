@@ -1,11 +1,6 @@
-// events.js
-
 // Replace these with your actual calendar ID and API key
 const CALENDAR_ID = 'canrugroup@gmail.com';
 const API_KEY = 'AIzaSyB5OeElttTcYlFt52JSKJqHMXoBHtQYhdQ';
-
-// ISO date/time now, used for filtering
-const nowISO = new Date().toISOString();
 
 // Elements for upcoming and past events (one will exist per page)
 const upcomingContainer = document.getElementById('upcoming-events');
@@ -14,7 +9,7 @@ const pastContainer = document.getElementById('past-events');
 // Base URL for Google Calendar API events list endpoint
 const EVENTS_API_URL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`;
 
-// Convert ISO date string to readable format with time zone
+// Format ISO date to readable string
 function formatDateTime(dateStr) {
   const options = {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -23,29 +18,40 @@ function formatDateTime(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, options);
 }
 
-// Strip invalid HTML and linkify URLs
+// Decode any HTML entities in a string
+function decodeHTML(html) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+// Remove broken HTML tags and convert URLs into links
 function linkifyText(text) {
   if (!text) return '';
 
-  // Remove broken HTML tags that may be present in raw Google Calendar description
-  const cleanText = text.replace(/<\/?[^>]+(>|$)/g, '');
+  // 1. Strip any malformed HTML tags
+  let cleaned = text.replace(/<\/?[^>]+(>|$)/g, '');
 
-  // Replace URLs with anchor tags
-  return cleanText.replace(/(https?:\/\/[^\s]+)/g, url =>
-    `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
-  );
+  // 2. Decode HTML entities
+  cleaned = decodeHTML(cleaned);
+
+  // 3. Convert raw URLs into clickable links (excluding punctuation)
+  return cleaned.replace(/(https?:\/\/[^\s<>"']+)/g, url => {
+    const safeUrl = url.replace(/[\.\,\)\]\!]+$/, ''); // strip trailing punctuation
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`;
+  });
 }
 
-// Format multi-paragraph plain text into paragraph-wrapped HTML with linkified URLs
+// Turn multiline text into paragraphs with links
 function formatDescription(text) {
   if (!text) return '';
-  const paragraphs = text.trim().split(/\n{2,}/);
+  const paragraphs = text.trim().split(/\n{2,}/); // paragraph breaks
   return paragraphs.map(p =>
     `<p>${linkifyText(p.replace(/\n/g, ' '))}</p>`
   ).join('');
 }
 
-// Render a list of events into a container
+// Render a list of events into the given container
 function renderEvents(container, events) {
   if (!events || events.length === 0) {
     container.innerHTML = '<p>No events to display.</p>';
@@ -71,7 +77,7 @@ function renderEvents(container, events) {
   container.innerHTML = html;
 }
 
-// Fetch all events from the Google Calendar API (max 2500 events)
+// Fetch events from the Google Calendar API
 async function fetchEvents() {
   const url = `${EVENTS_API_URL}?key=${API_KEY}&singleEvents=true&orderBy=startTime&maxResults=2500`;
   const response = await fetch(url);
@@ -82,7 +88,7 @@ async function fetchEvents() {
   return data.items || [];
 }
 
-// Main logic: Fetch, separate, and render events
+// Main logic to fetch, sort, and render upcoming/past events
 async function loadEvents() {
   try {
     const events = await fetchEvents();
@@ -117,5 +123,5 @@ async function loadEvents() {
   }
 }
 
-// Run the script
+// Load events on page load
 loadEvents();

@@ -18,39 +18,6 @@ function formatDateTime(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, options);
 }
 
-// Decode any HTML entities in a string
-function decodeHTML(html) {
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
-
-// Remove broken HTML tags and convert URLs into links
-function linkifyText(text) {
-  if (!text) return '';
-
-  // 1. Strip any malformed HTML tags
-  let cleaned = text.replace(/<\/?[^>]+(>|$)/g, '');
-
-  // 2. Decode HTML entities
-  cleaned = decodeHTML(cleaned);
-
-  // 3. Convert raw URLs into clickable links (excluding punctuation)
-  return cleaned.replace(/(https?:\/\/[^\s<>"']+)/g, url => {
-    const safeUrl = url.replace(/[\.\,\)\]\!]+$/, ''); // strip trailing punctuation
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`;
-  });
-}
-
-// Turn multiline text into paragraphs with links
-function formatDescription(text) {
-  if (!text) return '';
-  const paragraphs = text.trim().split(/\n{2,}/); // paragraph breaks
-  return paragraphs.map(p =>
-    `<p>${linkifyText(p.replace(/\n/g, ' '))}</p>`
-  ).join('');
-}
-
 // Render a list of events into the given container
 function renderEvents(container, events) {
   if (!events || events.length === 0) {
@@ -62,14 +29,17 @@ function renderEvents(container, events) {
     const start = event.start.dateTime || event.start.date;
     const end = event.end.dateTime || event.end.date;
     const location = event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : '';
-    const description = formatDescription(event.description || '');
+
+    // The description from API includes HTML entities and tags escaped as unicode.
+    // Insert it directly as innerHTML to render the links and formatting correctly.
+    const descriptionHTML = event.description ? `<p>${event.description}</p>` : '';
 
     return `
       <article>
         <h3>${event.summary || 'Untitled Event'}</h3>
         <p><strong>When:</strong> ${formatDateTime(start)} - ${formatDateTime(end)}</p>
         ${location}
-        ${description}
+        ${descriptionHTML}
       </article>
     `;
   }).join('');

@@ -1,3 +1,5 @@
+// events.js
+
 // Replace these with your actual calendar ID and API key
 const CALENDAR_ID = 'canrugroup@gmail.com';
 const API_KEY = 'AIzaSyB5OeElttTcYlFt52JSKJqHMXoBHtQYhdQ';
@@ -9,47 +11,65 @@ const pastContainer = document.getElementById('past-events');
 // Base URL for Google Calendar API events list endpoint
 const EVENTS_API_URL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`;
 
-// Get user's browser time zone
-const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-// Format ISO date to readable string with user's timezone
+// Format date/time nicely in user's local timezone
 function formatDateTime(dateStr) {
-  const options = {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+  const options = { 
+    year: 'numeric', month: 'short', day: 'numeric', 
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short' 
   };
-  return new Date(dateStr).toLocaleString(undefined, {...options, timeZone: userTimeZone});
+  // Convert to Date object then format using user's browser timezone
+  const date = new Date(dateStr);
+  return date.toLocaleString(undefined, options);
 }
 
-// Render a list of events into the given container
+// Render events into a container as HTML with proper HTML in description
 function renderEvents(container, events) {
   if (!events || events.length === 0) {
     container.innerHTML = '<p>No events to display.</p>';
     return;
   }
 
-  const html = events.map(event => {
+  container.innerHTML = ''; // Clear container
+
+  events.forEach(event => {
     const start = event.start.dateTime || event.start.date;
     const end = event.end.dateTime || event.end.date;
-    const location = event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : '';
 
-    // Insert description as HTML to properly render links and line breaks
-    const descriptionHTML = event.description ? `<div>${event.description}</div>` : '';
+    // Create main article element for the event
+    const article = document.createElement('article');
 
-    return `
-      <article>
-        <h3>${event.summary || 'Untitled Event'}</h3>
-        <p><strong>When:</strong> ${formatDateTime(start)} - ${formatDateTime(end)}</p>
-        ${location}
-        ${descriptionHTML}
-      </article>
-    `;
-  }).join('');
+    // Event title
+    const h3 = document.createElement('h3');
+    h3.textContent = event.summary || 'Untitled Event';
 
-  container.innerHTML = html;
+    // Event timing
+    const pWhen = document.createElement('p');
+    pWhen.innerHTML = `<strong>When:</strong> ${formatDateTime(start)} - ${formatDateTime(end)}`;
+
+    // Location (if exists)
+    let pLocation = null;
+    if (event.location) {
+      pLocation = document.createElement('p');
+      pLocation.innerHTML = `<strong>Location:</strong> ${event.location}`;
+    }
+
+    // Description div with HTML rendering
+    const descDiv = document.createElement('div');
+    if (event.description) {
+      descDiv.innerHTML = event.description;
+    }
+
+    // Append all elements in order
+    article.appendChild(h3);
+    article.appendChild(pWhen);
+    if (pLocation) article.appendChild(pLocation);
+    article.appendChild(descDiv);
+
+    container.appendChild(article);
+  });
 }
 
-// Fetch events from the Google Calendar API
+// Fetch all events from the Google Calendar API (max 2500 events)
 async function fetchEvents() {
   const url = `${EVENTS_API_URL}?key=${API_KEY}&singleEvents=true&orderBy=startTime&maxResults=2500`;
   const response = await fetch(url);
@@ -60,17 +80,20 @@ async function fetchEvents() {
   return data.items || [];
 }
 
-// Main logic to fetch, sort, and render upcoming/past events
+// Main function to load and render events based on page
 async function loadEvents() {
   try {
     const events = await fetchEvents();
-    const now = new Date();
 
     const upcomingEvents = [];
     const pastEvents = [];
 
+    const now = new Date();
+
     events.forEach(event => {
-      const eventDate = new Date(event.start.dateTime || event.start.date);
+      let eventDate = event.start.dateTime || event.start.date;
+      eventDate = new Date(eventDate);
+
       if (eventDate >= now) {
         upcomingEvents.push(event);
       } else {
@@ -83,17 +106,16 @@ async function loadEvents() {
     }
 
     if (pastContainer) {
-      pastEvents.sort((a, b) =>
-        new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date)
-      );
+      // Sort past events descending (most recent first)
+      pastEvents.sort((a, b) => new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date));
       renderEvents(pastContainer, pastEvents);
     }
   } catch (error) {
-    console.error('Error loading events:', error);
+    console.error(error);
     if (upcomingContainer) upcomingContainer.innerHTML = `<p>Error loading upcoming events.</p>`;
     if (pastContainer) pastContainer.innerHTML = `<p>Error loading past events.</p>`;
   }
 }
 
-// Load events on page load
+// Run the script
 loadEvents();

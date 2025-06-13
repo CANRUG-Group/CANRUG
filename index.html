@@ -7,8 +7,11 @@
     <link rel="stylesheet" href="simple.css" />
 </head>
 <body>
+    <!-- Header section with ARIA landmark role -->
     <header role="banner">
         <h1>Canadian Regional User Group (CANRUG)</h1>
+        
+        <!-- Navigation with ARIA landmark role and aria-label for screen readers -->
         <nav role="navigation" aria-label="Main Navigation">
             <a href="#home" aria-current="page">Home</a>
             <a href="#about">About</a>
@@ -17,12 +20,15 @@
         </nav>
     </header>
 
+    <!-- Main content section with ARIA landmark role -->
     <main role="main">
+        <!-- Home section with aria-labelledby -->
         <section id="home" aria-labelledby="home-heading">
             <h2 id="home-heading">Home</h2>
             <p>This is the official website of the Canadian Regional User Group (CANRUG) for libraries in Canada that use Ex Libris library products.</p>
         </section>
 
+        <!-- About section with aria-labelledby -->
         <section id="about" aria-labelledby="about-heading">
             <h2 id="about-heading">About CANRUG</h2>
             <p>CANRUG is the <a href="https://el-una.org/" target="_blank" rel="noopener noreferrer" aria-label="View ELUNA website. Opens in a new tab">Ex Libris User Group of North America (ELUNA)</a> regional user group for Canada. It serves as a forum for sharing information and expertise in the use of Ex Libris library products in Canada.</p>
@@ -30,11 +36,13 @@
                 CANRUG Draft By-laws.
             </a></p>
         </section>
-
+        
+        <!-- Events section with aria-labelledby -->
         <section id="events" aria-labelledby="events-heading">
             <h2 id="events-heading">Upcoming Events</h2>
             <p>Details about upcoming events and meetings will be shared here to keep members informed and engaged.</p>
 
+            <!-- Container for upcoming events loaded by JS -->
             <div id="upcoming-events">Loading upcoming events...</div>
 
             <p>
@@ -42,24 +50,26 @@
             </p>
         </section>
 
+        <!-- Contact section with aria-labelledby -->
         <section id="contact" aria-labelledby="contact-heading">
             <h2 id="contact-heading">Contact Us</h2>
             <p>CANRUG hosts a mailing list which is our main tool for collaboration and communication.
-                <br />
+                <br>
                 <a href="https://exlibrisusers.org/postorius/lists/canrug.exlibrisusers.org/" target="_blank" rel="noopener noreferrer" aria-label="Subscribe to CANRUG mailing list. Opens in a new tab" class="button">Join the mailing list today!</a>
             </p>
             <p>After signing up for the mailing list, please also complete this CANRUG registration form.
-                <br />
+                <br>
                 <a href="https://forms.gle/9sHQEi4qtTg9nTyW8" target="_blank" rel="noopener noreferrer" aria-label="Complete CANRUG registration form. Opens in a new tab" class="button">Complete the registration form</a>
             </p>
         </section>
     </main>
 
+    <!-- Footer section with ARIA landmark role -->
     <footer role="contentinfo">
         <p>&copy; 2024 CANRUG</p>
     </footer>
 
-    <!-- Load the JS file that fetches and shows upcoming events -->
+    <!-- Include events.js to load upcoming events dynamically -->
     <script src="events.js"></script>
 </body>
 </html>

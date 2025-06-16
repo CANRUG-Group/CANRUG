@@ -34,24 +34,23 @@ function formatEventTimes(startStr, endStr, eventTimeZone) {
 }
 
 /**
- * Decodes escaped HTML from Google Calendar (e.g. \u003c -> <).
- * Returns safe HTML string ready to insert as innerHTML.
+ * Decodes escaped HTML entities from Google Calendar descriptions.
+ * E.g. converts \u003c to < safely once.
  */
 function cleanDescription(input) {
+  if (!input) return '';
   try {
-    let decoded = input
-      .replace(/\\u003c/gi, '<')
-      .replace(/\\u003e/gi, '>')
-      .replace(/\\u0026/gi, '&')
-      .replace(/\\u0022/gi, '"')
-      .replace(/\\u0027/gi, "'");
+    // Replace unicode escape sequences
+    let decoded = input.replace(/\\u003c/gi, '<')
+                       .replace(/\\u003e/gi, '>')
+                       .replace(/\\u0026/gi, '&')
+                       .replace(/\\u0022/gi, '"')
+                       .replace(/\\u0027/gi, "'");
 
-    // Use a textarea to decode any HTML entities
+    // Use a textarea to decode HTML entities (like &amp;)
     const textarea = document.createElement('textarea');
     textarea.innerHTML = decoded;
-    decoded = textarea.value;
-
-    return decoded;
+    return textarea.value;
   } catch (err) {
     console.warn('Description decode failed:', err);
     return input;
@@ -59,28 +58,28 @@ function cleanDescription(input) {
 }
 
 /**
- * Sanitizes the description HTML by allowing only certain tags and
- * stripping out nested or malformed anchor tags.
+ * Sanitizes the description HTML by allowing only specific tags
+ * and removing invalid or nested anchor tags to prevent broken HTML.
  */
 function sanitizeDescription(html) {
   const allowedTags = ['A', 'BR', 'P', 'STRONG', 'EM', 'UL', 'OL', 'LI'];
+
   const container = document.createElement('div');
   container.innerHTML = html;
 
-  // Remove any tags not allowed
+  // Remove disallowed tags by replacing with their text content
   [...container.querySelectorAll('*')].forEach(el => {
     if (!allowedTags.includes(el.tagName)) {
-      // Replace disallowed tags with their text content
       const textNode = document.createTextNode(el.textContent);
       el.parentNode.replaceChild(textNode, el);
     }
   });
 
-  // Fix all anchor tags: ensure href, target, rel attributes are correct
+  // Fix all <a> tags: ensure href is valid and attributes are safe
   container.querySelectorAll('a').forEach(a => {
     const href = a.getAttribute('href');
+    // Remove anchors with invalid or missing href
     if (!href || !href.startsWith('http')) {
-      // Remove anchors with invalid href to avoid broken links
       const textNode = document.createTextNode(a.textContent);
       a.parentNode.replaceChild(textNode, a);
       return;
@@ -93,7 +92,7 @@ function sanitizeDescription(html) {
 }
 
 /**
- * Renders events to the given container.
+ * Renders events into the provided container element.
  */
 function renderEvents(container, events) {
   if (!events || events.length === 0) {
@@ -101,7 +100,7 @@ function renderEvents(container, events) {
     return;
   }
 
-  container.innerHTML = ''; // Clear previous content
+  container.innerHTML = ''; // Clear existing content
 
   events.forEach(event => {
     const start = event.start.dateTime || event.start.date;
@@ -123,21 +122,16 @@ function renderEvents(container, events) {
       <strong>Your Time:</strong><br>${localTZ}
     `;
 
-    // Description
+    // Description container
     const desc = document.createElement('div');
     if (event.description) {
-      // Clean and decode description string from API
-      let cleanDesc = cleanDescription(event.description);
-
-      // Sanitize description HTML (remove nested broken <a> tags etc)
-      cleanDesc = sanitizeDescription(cleanDesc);
-
-      desc.innerHTML = cleanDesc;
+      const cleanDesc = cleanDescription(event.description);
+      const safeDesc = sanitizeDescription(cleanDesc);
+      desc.innerHTML = safeDesc;
     } else {
       desc.textContent = '(No description provided)';
     }
 
-    // Append to article
     article.appendChild(h3);
     article.appendChild(pWhen);
     article.appendChild(desc);
@@ -147,7 +141,7 @@ function renderEvents(container, events) {
 }
 
 /**
- * Fetch all calendar events (up to 2500 max).
+ * Fetch all calendar events.
  */
 async function fetchEvents() {
   const url = `${EVENTS_API_URL}?key=${API_KEY}&singleEvents=true&orderBy=startTime&maxResults=2500`;
@@ -160,7 +154,7 @@ async function fetchEvents() {
 }
 
 /**
- * Main: Load and categorize events.
+ * Load events and separate into upcoming and past events.
  */
 async function loadEvents() {
   try {
@@ -170,9 +164,7 @@ async function loadEvents() {
     const upcoming = events.filter(e => new Date(e.start.dateTime || e.start.date) >= now);
     const past = events.filter(e => new Date(e.start.dateTime || e.start.date) < now);
 
-    if (upcomingContainer) {
-      renderEvents(upcomingContainer, upcoming);
-    }
+    if (upcomingContainer) renderEvents(upcomingContainer, upcoming);
 
     if (pastContainer) {
       past.sort((a, b) => new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date));
@@ -187,3 +179,4 @@ async function loadEvents() {
 
 // Load events on page load
 loadEvents();
+

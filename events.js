@@ -35,14 +35,19 @@ function formatEventTimes(startStr, endStr, eventTimeZone) {
 
 /**
  * Decodes escaped HTML from Google Calendar (e.g. \u003c -> <).
+ * This returns safe HTML string ready to insert as innerHTML.
  */
 function cleanDescription(input) {
   try {
-    const decoded = input
-      .replace(/\\u003c/g, '<')
-      .replace(/\\u003e/g, '>')
-      .replace(/\\u0026/g, '&');
+    // Replace unicode escape sequences with actual characters
+    let decoded = input
+      .replace(/\\u003c/gi, '<')
+      .replace(/\\u003e/gi, '>')
+      .replace(/\\u0026/gi, '&')
+      .replace(/\\u0022/gi, '"')
+      .replace(/\\u0027/gi, "'");
 
+    // Sometimes descriptions have escaped quotes and other escapes, decode via textarea trick
     const textarea = document.createElement('textarea');
     textarea.innerHTML = decoded;
     return textarea.value;
@@ -86,7 +91,16 @@ function renderEvents(container, events) {
     // Description
     const desc = document.createElement('div');
     if (event.description) {
-      desc.innerHTML = cleanDescription(event.description);
+      // Clean and decode description string from API
+      const cleanDesc = cleanDescription(event.description);
+      // Insert decoded HTML once
+      desc.innerHTML = cleanDesc;
+
+      // Add target and rel attributes to all <a> tags inside description for security and UX
+      desc.querySelectorAll('a').forEach(a => {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      });
     }
 
     // Append to article

@@ -17,7 +17,6 @@ function formatDateTime(dateStr) {
     year: 'numeric', month: 'short', day: 'numeric', 
     hour: '2-digit', minute: '2-digit', timeZoneName: 'short' 
   };
-  // Convert to Date object then format using user's browser timezone
   const date = new Date(dateStr);
   return date.toLocaleString(undefined, options);
 }
@@ -35,31 +34,30 @@ function renderEvents(container, events) {
     const start = event.start.dateTime || event.start.date;
     const end = event.end.dateTime || event.end.date;
 
-    // Create main article element for the event
     const article = document.createElement('article');
 
-    // Event title
+    // Title
     const h3 = document.createElement('h3');
     h3.textContent = event.summary || 'Untitled Event';
 
-    // Event timing
+    // When
     const pWhen = document.createElement('p');
     pWhen.innerHTML = `<strong>When:</strong> ${formatDateTime(start)} - ${formatDateTime(end)}`;
 
-    // Location (if exists)
+    // Location
     let pLocation = null;
     if (event.location) {
       pLocation = document.createElement('p');
       pLocation.innerHTML = `<strong>Location:</strong> ${event.location}`;
     }
 
-    // Description div with HTML rendering
+    // Description (rendered as HTML from Google Calendar)
     const descDiv = document.createElement('div');
     if (event.description) {
       descDiv.innerHTML = event.description;
     }
 
-    // Append all elements in order
+    // Append all parts
     article.appendChild(h3);
     article.appendChild(pWhen);
     if (pLocation) article.appendChild(pLocation);
@@ -69,7 +67,7 @@ function renderEvents(container, events) {
   });
 }
 
-// Fetch all events from the Google Calendar API (max 2500 events)
+// Fetch events from the Google Calendar API
 async function fetchEvents() {
   const url = `${EVENTS_API_URL}?key=${API_KEY}&singleEvents=true&orderBy=startTime&maxResults=2500`;
   const response = await fetch(url);
@@ -80,20 +78,16 @@ async function fetchEvents() {
   return data.items || [];
 }
 
-// Main function to load and render events based on page
+// Load and sort events
 async function loadEvents() {
   try {
     const events = await fetchEvents();
-
     const upcomingEvents = [];
     const pastEvents = [];
-
     const now = new Date();
 
     events.forEach(event => {
-      let eventDate = event.start.dateTime || event.start.date;
-      eventDate = new Date(eventDate);
-
+      const eventDate = new Date(event.start.dateTime || event.start.date);
       if (eventDate >= now) {
         upcomingEvents.push(event);
       } else {
@@ -106,7 +100,6 @@ async function loadEvents() {
     }
 
     if (pastContainer) {
-      // Sort past events descending (most recent first)
       pastEvents.sort((a, b) => new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date));
       renderEvents(pastContainer, pastEvents);
     }
@@ -117,5 +110,5 @@ async function loadEvents() {
   }
 }
 
-// Run the script
+// Run script
 loadEvents();

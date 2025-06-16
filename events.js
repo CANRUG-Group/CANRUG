@@ -35,11 +35,10 @@ function formatEventTimes(startStr, endStr, eventTimeZone) {
 
 /**
  * Decodes escaped HTML from Google Calendar (e.g. \u003c -> <).
- * This returns safe HTML string ready to insert as innerHTML.
+ * Returns safe HTML string ready to insert as innerHTML.
  */
 function cleanDescription(input) {
   try {
-    // Replace unicode escape sequences with actual characters
     let decoded = input
       .replace(/\\u003c/gi, '<')
       .replace(/\\u003e/gi, '>')
@@ -47,14 +46,50 @@ function cleanDescription(input) {
       .replace(/\\u0022/gi, '"')
       .replace(/\\u0027/gi, "'");
 
-    // Sometimes descriptions have escaped quotes and other escapes, decode via textarea trick
+    // Use a textarea to decode any HTML entities
     const textarea = document.createElement('textarea');
     textarea.innerHTML = decoded;
-    return textarea.value;
+    decoded = textarea.value;
+
+    return decoded;
   } catch (err) {
     console.warn('Description decode failed:', err);
     return input;
   }
+}
+
+/**
+ * Sanitizes the description HTML by allowing only certain tags and
+ * stripping out nested or malformed anchor tags.
+ */
+function sanitizeDescription(html) {
+  const allowedTags = ['A', 'BR', 'P', 'STRONG', 'EM', 'UL', 'OL', 'LI'];
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  // Remove any tags not allowed
+  [...container.querySelectorAll('*')].forEach(el => {
+    if (!allowedTags.includes(el.tagName)) {
+      // Replace disallowed tags with their text content
+      const textNode = document.createTextNode(el.textContent);
+      el.parentNode.replaceChild(textNode, el);
+    }
+  });
+
+  // Fix all anchor tags: ensure href, target, rel attributes are correct
+  container.querySelectorAll('a').forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href || !href.startsWith('http')) {
+      // Remove anchors with invalid href to avoid broken links
+      const textNode = document.createTextNode(a.textContent);
+      a.parentNode.replaceChild(textNode, a);
+      return;
+    }
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer nofollow');
+  });
+
+  return container.innerHTML;
 }
 
 /**
@@ -92,15 +127,14 @@ function renderEvents(container, events) {
     const desc = document.createElement('div');
     if (event.description) {
       // Clean and decode description string from API
-      const cleanDesc = cleanDescription(event.description);
-      // Insert decoded HTML once
-      desc.innerHTML = cleanDesc;
+      let cleanDesc = cleanDescription(event.description);
 
-      // Add target and rel attributes to all <a> tags inside description for security and UX
-      desc.querySelectorAll('a').forEach(a => {
-        a.setAttribute('target', '_blank');
-        a.setAttribute('rel', 'noopener noreferrer');
-      });
+      // Sanitize description HTML (remove nested broken <a> tags etc)
+      cleanDesc = sanitizeDescription(cleanDesc);
+
+      desc.innerHTML = cleanDesc;
+    } else {
+      desc.textContent = '(No description provided)';
     }
 
     // Append to article

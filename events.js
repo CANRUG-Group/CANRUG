@@ -35,19 +35,16 @@ function formatEventTimes(startStr, endStr, eventTimeZone) {
 
 /**
  * Decodes escaped HTML entities from Google Calendar descriptions.
- * E.g. converts \u003c to < safely once.
  */
 function cleanDescription(input) {
   if (!input) return '';
   try {
-    // Replace unicode escape sequences
     let decoded = input.replace(/\\u003c/gi, '<')
                        .replace(/\\u003e/gi, '>')
                        .replace(/\\u0026/gi, '&')
                        .replace(/\\u0022/gi, '"')
                        .replace(/\\u0027/gi, "'");
 
-    // Use a textarea to decode HTML entities (like &amp;)
     const textarea = document.createElement('textarea');
     textarea.innerHTML = decoded;
     return textarea.value;
@@ -58,8 +55,7 @@ function cleanDescription(input) {
 }
 
 /**
- * Sanitizes the description HTML by allowing only specific tags
- * and removing invalid or nested anchor tags to prevent broken HTML.
+ * Sanitizes the description HTML.
  */
 function sanitizeDescription(html) {
   const allowedTags = ['A', 'BR', 'P', 'STRONG', 'EM', 'UL', 'OL', 'LI'];
@@ -67,7 +63,6 @@ function sanitizeDescription(html) {
   const container = document.createElement('div');
   container.innerHTML = html;
 
-  // Remove disallowed tags by replacing with their text content
   [...container.querySelectorAll('*')].forEach(el => {
     if (!allowedTags.includes(el.tagName)) {
       const textNode = document.createTextNode(el.textContent);
@@ -75,10 +70,8 @@ function sanitizeDescription(html) {
     }
   });
 
-  // Fix all <a> tags: ensure href is valid and attributes are safe
   container.querySelectorAll('a').forEach(a => {
     const href = a.getAttribute('href');
-    // Remove anchors with invalid or missing href
     if (!href || !href.startsWith('http')) {
       const textNode = document.createTextNode(a.textContent);
       a.parentNode.replaceChild(textNode, a);
@@ -122,7 +115,7 @@ function renderEvents(container, events) {
       <strong>Your Time:</strong><br>${localTZ}
     `;
 
-    // Description container
+    // Description
     const desc = document.createElement('div');
     if (event.description) {
       const cleanDesc = cleanDescription(event.description);
@@ -132,9 +125,20 @@ function renderEvents(container, events) {
       desc.textContent = '(No description provided)';
     }
 
+    // Add to Google Calendar Link
+    const calendarLink = document.createElement('p');
+    if (event.htmlLink) {
+      calendarLink.innerHTML = `
+        <a href="${event.htmlLink}" target="_blank" rel="noopener noreferrer nofollow">
+          ➕ Add to Google Calendar
+        </a>
+      `;
+    }
+
     article.appendChild(h3);
     article.appendChild(pWhen);
     article.appendChild(desc);
+    article.appendChild(calendarLink);
 
     container.appendChild(article);
   });
@@ -179,4 +183,3 @@ async function loadEvents() {
 
 // Load events on page load
 loadEvents();
-

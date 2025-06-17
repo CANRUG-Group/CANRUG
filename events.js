@@ -127,19 +127,30 @@ function renderEvents(container, events) {
 
     // Add to Google Calendar Link
     const calendarLink = document.createElement('p');
-    if (event.htmlLink) {
-      calendarLink.innerHTML = `
-        <a href="${event.htmlLink}" target="_blank" rel="noopener noreferrer nofollow">
-          ➕ Add to Google Calendar
-        </a>
-      `;
+    let link = event.htmlLink;
+
+    if (!link) {
+      // Fallback if htmlLink is missing
+      const title = encodeURIComponent(event.summary || 'Event');
+      const details = encodeURIComponent(event.description || '');
+      const location = encodeURIComponent(event.location || '');
+      const startStr = new Date(start).toISOString().replace(/-|:|\.\d\d\d/g, '');
+      const endStr = new Date(end).toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+      link = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}&sf=true&output=xml`;
     }
 
+    calendarLink.innerHTML = `
+      <a href="${link}" target="_blank" rel="noopener noreferrer nofollow">
+        ➕ Add to Google Calendar
+      </a>
+    `;
+
+    // Append all
     article.appendChild(h3);
     article.appendChild(pWhen);
     article.appendChild(desc);
     article.appendChild(calendarLink);
-
     container.appendChild(article);
   });
 }

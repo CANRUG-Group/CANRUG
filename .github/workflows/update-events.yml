@@ -27,9 +27,11 @@ jobs:
         run: node fetch-events.js
 
       - name: Commit and push changes if any
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add events.json
           git diff --cached --quiet || git commit -m "Update events.json via GitHub Actions"
-          git push origin HEAD:alt
+          git push https://x-access-token:${PAT_TOKEN}@github.com/CANRUG-Group/CANRUG.git HEAD:alt

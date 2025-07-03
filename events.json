@@ -1,5 +1,17 @@
 {
-  "upcoming": [],
+  "upcoming": [
+    {
+      "summary": "TEST",
+      "start": "2025-07-04T15:00:00-06:00",
+      "end": "2025-07-04T16:00:00-06:00",
+      "eventTimeZone": "America/Edmonton",
+      "whenEventTZ": "Jul 4, 2025, 03:00 PM - Jul 4, 2025, 04:00 PM (America/Edmonton)",
+      "whenLocalTZ": "Jul 4, 2025, 09:00 PM - Jul 4, 2025, 10:00 PM (UTC)",
+      "description": "",
+      "htmlLink": "https://www.google.com/calendar/event?eid=NWcxZ25kcjlzOGZpOGY2bDEwN25iZnJudGkgY2FucnVncm91cEBt",
+      "location": ""
+    }
+  ],
   "past": [
     {
       "summary": "ELUNA 2025: Canadian Regional User Group Meeting",

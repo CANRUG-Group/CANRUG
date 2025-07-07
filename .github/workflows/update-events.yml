@@ -2,7 +2,7 @@ name: Update Google Calendar Events
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour on the hour (UTC)
+    - cron: '0 */6 * * *'  # At minute 0 past every 6th hour
   workflow_dispatch:       # Allow manual trigger
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          ref: alt
 
       - name: Setup Node.js
         uses: actions/setup-node@v3

@@ -1,4 +1,4 @@
-name: Update Google Calendar Events
+name: Fetch Google Calendar Events
 
 on:
   schedule:

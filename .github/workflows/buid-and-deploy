@@ -7,7 +7,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours
+    - cron: '0 */6 * * *'
 
 permissions:
   contents: read
@@ -21,7 +21,6 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -31,7 +30,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # needed for pushing back
+          persist-credentials: true  # needed for pushing commits
 
       # Step 2: Setup Python
       - name: Setup Python
@@ -45,40 +44,45 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Check API key
-      - name: Check API key
+      # Step 4: Debug API key
+      - name: Debug API key
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
+          echo "Checking GOOGLE_API_KEY..."
           if [ -z "$GOOGLE_API_KEY" ]; then
             echo "❌ GOOGLE_API_KEY is not set"
             exit 1
           else
-            echo "✅ GOOGLE_API_KEY is set"
+            echo "✅ GOOGLE_API_KEY is set (length: ${#GOOGLE_API_KEY})"
           fi
 
-      # Step 5: Fetch events
+      # Step 5: Fetch Google Calendar events
       - name: Fetch Google Calendar events
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
+          set -e
+          echo "Fetching events..."
           python events-fetcher.py
+          
+          echo "Checking events.json..."
           if [ ! -f events.json ]; then
-            echo "❌ events.json was not created"
+            echo "❌ events.json not found"
             exit 1
-          else
-            echo "✅ events.json created"
           fi
+          
+          echo "✅ events.json exists"
+          echo "First 20 lines:"
+          head -n 20 events.json
 
-      # Step 6: Commit events.json if changed
+      # Step 6: Commit updated events.json
       - name: Commit updated events.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add events.json
-          
-          # Only commit if there are changes
           if git diff --cached --quiet; then
             echo "No changes in events.json, skipping commit"
           else
@@ -87,22 +91,17 @@ jobs:
             echo "✅ events.json updated and pushed"
           fi
 
-      # Step 7: Debug - list repo files
-      - name: List files for debugging
-        run: |
-          ls -la
-
-      # Step 8: Setup GitHub Pages
+      # Step 7: Setup GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      # Step 9: Upload all files from repo root
-      - name: Upload artifact
+      # Step 8: Upload artifact
+      - name: Upload repo root
         uses: actions/upload-pages-artifact@v2
         with:
           path: '.'  # deploy everything from repo root
 
-      # Step 10: Deploy to GitHub Pages
+      # Step 9: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2

@@ -1,0 +1,44 @@
+name: Update Events JSON
+
+on:
+  push:
+    branches:
+      - main    # change if your default branch is different
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+jobs:
+  update-events:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'  # adjust if needed
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Run the events fetcher
+      - name: Generate events.json
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python events-fetcher.py
+
+      # 5. Commit and push events.json if changed
+      - name: Commit and push updated events.json
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add events.json
+          git diff --cached --quiet || git commit -m "Update events.json [skip ci]"
+          git push

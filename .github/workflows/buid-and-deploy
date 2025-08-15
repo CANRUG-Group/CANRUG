@@ -47,15 +47,44 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    # Step 4: Fetch events from Google Calendar
+    # Step 4: Debug environment and fetch events
+    - name: Debug API setup
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      run: |
+        echo "Checking API key setup..."
+        if [ -z "$GOOGLE_API_KEY" ]; then
+          echo "❌ ERROR: GOOGLE_API_KEY is not set!"
+          echo "Please add your Google Calendar API key as a repository secret named 'GOOGLE_API_KEY'"
+          exit 1
+        else
+          echo "✅ API key is set (length: ${#GOOGLE_API_KEY} characters)"
+        fi
+        
+        echo "Testing network connectivity..."
+        curl -s "https://www.googleapis.com/calendar/v3/calendars/canrugroup%40gmail.com/events?key=$GOOGLE_API_KEY&maxResults=1" | head -200
+    
+    # Step 5: Fetch events from Google Calendar
     - name: Fetch calendar events
       env:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       run: |
         echo "Fetching events from Google Calendar..."
         python events-fetcher.py
+        
+        echo "Checking if events.json was created..."
+        if [ -f events.json ]; then
+          echo "✅ events.json created successfully"
+          echo "File size: $(wc -c < events.json) bytes"
+          echo "First 200 characters:"
+          head -c 200 events.json
+        else
+          echo "❌ events.json was not created"
+          echo "This usually means the Python script failed"
+          exit 1
+        fi
     
-    # Step 5: Create dist directory and copy all static files
+    # Step 6: Create dist directory and copy all static files
     - name: Prepare website files
       run: |
         echo "Creating dist directory and copying files..."
@@ -85,7 +114,7 @@ jobs:
           fi
         done
     
-    # Step 6: List generated files for debugging
+    # Step 7: List generated files for debugging
     - name: List generated files
       run: |
         echo "Contents of dist directory:"
@@ -93,17 +122,17 @@ jobs:
         echo "events.json contents (first 500 chars):"
         head -c 500 events.json 2>/dev/null || echo "events.json not found"
     
-    # Step 7: Setup GitHub Pages
+    # Step 8: Setup GitHub Pages
     - name: Setup Pages
       uses: actions/configure-pages@v3
     
-    # Step 8: Upload the built website
+    # Step 9: Upload the built website
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v2
       with:
         path: './dist'
     
-    # Step 9: Deploy to GitHub Pages
+    # Step 10: Deploy to GitHub Pages
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v2

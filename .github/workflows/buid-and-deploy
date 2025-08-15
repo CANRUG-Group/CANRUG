@@ -30,6 +30,8 @@ jobs:
       # Step 1: Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # needed for pushing back
 
       # Step 2: Setup Python
       - name: Setup Python
@@ -68,22 +70,39 @@ jobs:
             echo "✅ events.json created"
           fi
 
-      # Step 6: Debug - list repo files
+      # Step 6: Commit events.json if changed
+      - name: Commit updated events.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add events.json
+          
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes in events.json, skipping commit"
+          else
+            git commit -m "Update events.json from GitHub Actions"
+            git push origin main
+            echo "✅ events.json updated and pushed"
+          fi
+
+      # Step 7: Debug - list repo files
       - name: List files for debugging
         run: |
           ls -la
 
-      # Step 7: Setup GitHub Pages
+      # Step 8: Setup GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      # Step 8: Upload all files from repo root
+      # Step 9: Upload all files from repo root
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           path: '.'  # deploy everything from repo root
 
-      # Step 9: Deploy to GitHub Pages
+      # Step 10: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2

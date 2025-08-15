@@ -8,8 +8,8 @@ on:
     branches: [ main ]
   workflow_dispatch:  # Allows manual triggering from GitHub UI
   schedule:
-    # Run daily at 6 AM UTC to update events
-    - cron: '0 6 * * *'
+    # Run every 6 hours to keep events updated
+    - cron: '0 */6 * * *'
 
 # Set permissions for GitHub Pages deployment
 permissions:

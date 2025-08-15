@@ -1,0 +1,109 @@
+name: Build and Deploy CANRUG Website
+
+# Trigger the workflow on pushes to main branch and manual dispatch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+  schedule:
+    # Run daily at 6 AM UTC to update events
+    - cron: '0 6 * * *'
+
+# Set permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Ensure only one deployment runs at a time
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    # Step 1: Check out the repository code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    # Step 2: Set up Python environment
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    # Step 3: Install Python dependencies
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    # Step 4: Fetch events from Google Calendar
+    - name: Fetch calendar events
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      run: |
+        echo "Fetching events from Google Calendar..."
+        python events-fetcher.py
+    
+    # Step 5: Create dist directory and copy all static files
+    - name: Prepare website files
+      run: |
+        echo "Creating dist directory and copying files..."
+        mkdir -p dist
+        
+        # Copy all HTML files
+        cp index.html dist/
+        cp pastevents.html dist/
+        
+        # Copy CSS and JS
+        cp simple.css dist/
+        cp events-loader.js dist/
+        
+        # Copy events.json if it exists
+        if [ -f events.json ]; then
+          cp events.json dist/
+          echo "Copied events.json"
+        else
+          echo "Warning: events.json not found"
+        fi
+        
+        # Copy any image files
+        find . -maxdepth 1 -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.svg" -o -name "*.ico" | while read file; do
+          if [ -f "$file" ]; then
+            cp "$file" dist/
+            echo "Copied asset: $file"
+          fi
+        done
+    
+    # Step 6: List generated files for debugging
+    - name: List generated files
+      run: |
+        echo "Contents of dist directory:"
+        ls -la dist/
+        echo "events.json contents (first 500 chars):"
+        head -c 500 events.json 2>/dev/null || echo "events.json not found"
+    
+    # Step 7: Setup GitHub Pages
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+    
+    # Step 8: Upload the built website
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: './dist'
+    
+    # Step 9: Deploy to GitHub Pages
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2

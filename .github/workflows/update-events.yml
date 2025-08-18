@@ -2,7 +2,7 @@ name: Update events.json
 
 on:
   schedule:
-    - cron: '0 * * * *' # every hour
+    - cron: '0 0 * * *' # every day at midnight UTC
   workflow_dispatch: # manual trigger
 
 jobs:

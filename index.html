@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Canadian Regional User Group</title>
+    <link rel="stylesheet" href="simple.css" />
+</head>
+<body>
+    <header role="banner">
+        <h1>Canadian Regional User Group (CANRUG)</h1>
+        
+        <nav role="navigation" aria-label="Main Navigation">
+            <a href="#home" aria-current="page">Home</a>
+            <a href="#about">About</a>
+            <a href="#events">Events</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main role="main">
+        <section id="home" aria-labelledby="home-heading">
+            <h2 id="home-heading">Home</h2>
+            <p>This is the official website of the Canadian Regional User Group (CANRUG) for libraries in Canada that use Ex Libris library products.</p>
+        </section>
+
+        <section id="about" aria-labelledby="about-heading">
+            <h2 id="about-heading">About CANRUG</h2>
+            <p>CANRUG is the <a href="https://el-una.org/" target="_blank" rel="noopener noreferrer" aria-label="View ELUNA website. Opens in a new tab">Ex Libris User Group of North America (ELUNA)</a> regional user group for Canada. It serves as a forum for sharing information and expertise in the use of Ex Libris library products in Canada.</p>
+            <p><a href="https://drive.google.com/file/d/1B_R0Lie1swNl4ZKOp2kZ9VvqPiYXULcI/view?usp=drive_link" target="_blank" rel="noopener noreferrer" aria-label="View CANRUG's draft by-laws. Opens in a new tab">
+                CANRUG By-laws.
+            </a></p>
+        </section>
+        
+        <section id="events" aria-labelledby="events-heading">
+            <h2 id="events-heading">Upcoming Events</h2>
+            <p>Details about upcoming events and meetings will be shared here to keep members informed and engaged.</p>
+
+            <div id="upcoming-events">
+                <!-- Events will be loaded here by JavaScript -->
+                <p>Loading events...</p>
+            </div>
+
+            <p>
+                <a href="pastevents.html" aria-label="View past CANRUG events" class="button">View Past Events</a>
+            </p>
+        </section>
+
+        <section id="contact" aria-labelledby="contact-heading">
+            <h2 id="contact-heading">Contact Us</h2>
+            <p>CANRUG hosts a mailing list which is our main tool for collaboration and communication.
+                <br>
+                <a href="https://exlibrisusers.org/postorius/lists/canrug.exlibrisusers.org/" target="_blank" rel="noopener noreferrer" aria-label="Subscribe to CANRUG mailing list. Opens in a new tab" class="button">Join the mailing list today!</a>
+            </p>
+            <p>After signing up for the mailing list, please also complete this CANRUG registration form.
+                <br>
+                <a href="https://forms.gle/9sHQEi4qtTg9nTyW8" target="_blank" rel="noopener noreferrer" aria-label="Complete CANRUG registration form. Opens in a new tab" class="button">Complete the registration form</a>
+            </p>
+            <p>If you have a question, comment, or feedback for the CANRUG organizers, please use our contact form:
+                <br>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScy--s_Ldy95o2NmqrFE8jZw4y6cPoULSU2vtqCkQGaC8d-bA/viewform?usp=header" target="_blank" rel="noopener noreferrer" aria-label="Send a message to CANRUG organizers. Opens in a new tab" class="button">Send us a message</a>
+            </p>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p>&copy; 2024 CANRUG</p>
+    </footer>
+
+    <script>
+    (function() {
+        // Load events from the pre-generated HTML file
+        fetch('_includes/events-upcoming.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('upcoming-events').innerHTML = html;
+                updateToLocalTime();
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                document.getElementById('upcoming-events').innerHTML = '<p>Error loading events. Please try again later.</p>';
+            });
+
+        /**
+         * Finds all elements with class 'js-local-time', reads their ISO data 
+         * attributes, and converts them to the visitor's local timezone.
+         */
+        function updateToLocalTime() {
+            const timeElements = document.querySelectorAll('.js-local-time');
+            
+            // Detect the user's timezone (e.g., "America/Edmonton")
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            timeElements.forEach(el => {
+                const startISO = el.getAttribute('data-start');
+                const endISO = el.getAttribute('data-end');
+                
+                if (!startISO) return;
+
+                const startDate = new Date(startISO);
+                const endDate = new Date(endISO);
+
+                const dateOptions = { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+                
+                const timeOptions = { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+
+                try {
+                    const localStartStr = startDate.toLocaleString(undefined, dateOptions);
+                    const localEndStr = endDate.toLocaleString(undefined, timeOptions);
+                    
+                    el.innerHTML = `${localStartStr} - ${localEndStr} (${userTimezone})`;
+                } catch (e) {
+                    console.error("Error converting time:", e);
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

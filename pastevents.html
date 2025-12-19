@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Past Events - Canadian Regional User Group</title>
+    <link rel="stylesheet" href="simple.css" />
+</head>
+<body>
+    <header role="banner">
+        <h1>Canadian Regional User Group (CANRUG)</h1>
+        
+        <nav role="navigation" aria-label="Main Navigation">
+            <a href="index.html">Home</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html#events">Events</a>
+            <a href="index.html#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main role="main">
+        <section id="past-events" aria-labelledby="past-events-heading">
+            <h2 id="past-events-heading">Past Events</h2>
+            <p>Here's a record of our previous meetings and events.</p>
+
+            <div id="past-events-list">
+                <!-- Events will be loaded here by JavaScript -->
+                <p>Loading past events...</p>
+            </div>
+
+            <p>
+                <a href="index.html#events" aria-label="Back to upcoming events" class="button">Back to Upcoming Events</a>
+            </p>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p>&copy; 2024 CANRUG</p>
+    </footer>
+
+    <script>
+    (function() {
+        // Load events from the pre-generated HTML file
+        fetch('_includes/events-past.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('past-events-list').innerHTML = html;
+                updateToLocalTime();
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                document.getElementById('past-events-list').innerHTML = '<p>Error loading past events. Please try again later.</p>';
+            });
+
+        function updateToLocalTime() {
+            const timeElements = document.querySelectorAll('.js-local-time');
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            timeElements.forEach(el => {
+                const startISO = el.getAttribute('data-start');
+                const endISO = el.getAttribute('data-end');
+                
+                if (!startISO) return;
+
+                const startDate = new Date(startISO);
+                const endDate = new Date(endISO);
+
+                const dateOptions = { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+                
+                const timeOptions = { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+
+                try {
+                    const localStartStr = startDate.toLocaleString(undefined, dateOptions);
+                    const localEndStr = endDate.toLocaleString(undefined, timeOptions);
+                    
+                    el.innerHTML = `${localStartStr} - ${localEndStr} (${userTimezone})`;
+                } catch (e) {
+                    console.error("Error converting time:", e);
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

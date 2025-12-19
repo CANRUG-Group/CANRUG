@@ -1,26 +1,38 @@
-name: Update Events from Google Calendar
+name: Update Events and Deploy to GitHub Pages
 
 on:
   schedule:
-    # Run daily at 6 AM UTC (adjust timezone as needed)
+    # Run daily at 6 AM UTC
     - cron: '0 6 * * *'
   workflow_dispatch:  # Allow manual trigger
   push:
     branches:
-      - main  # Run on push to main branch
+      - main
+
+# Sets permissions for both committing and deploying
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  update-events:
+  update-and-deploy:
     runs-on: ubuntu-latest
     
-    permissions:
-      contents: write  # Required to commit changes
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper git operations
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,29 +48,34 @@ jobs:
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          python fetch-events.py
+          python fetch-events.py || echo "Using existing events.json"
       
       - name: Build site
         run: |
           python build-local.py
       
-      - name: Check for changes
+      - name: Check for changes and commit
         id: check_changes
         run: |
-          git add events.json _includes/ _site/
+          git add events.json _includes/
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No changes to commit"
+            echo "No event changes to commit"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected"
+            echo "Event changes detected"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "Update events from Google Calendar [skip ci]"
+            git pull --rebase origin main || true
+            git push || echo "Push failed, continuing with deployment"
           fi
       
-      - name: Commit and push changes
-        if: steps.check_changes.outputs.has_changes == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git pull --rebase origin main
-          git commit -m "Update events from Google Calendar [skip ci]"
-          git push
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

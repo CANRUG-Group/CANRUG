@@ -62,10 +62,9 @@ def format_event_html(event):
     # Build HTML with no leading/trailing whitespace
     html_output = '<article>'
     html_output += f'<h3>{summary}</h3>'
-    html_output += f'<p><strong>Event Time ({display_tz}):</strong> {event_time_display}</p>'
     
     # Output placeholder that JavaScript will fill in
-    html_output += '<p><strong>Your Local Time:</strong> '
+    html_output += '<p><strong>Time:</strong> '
     html_output += f'<span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">—</span></p>'
     
     html_output += f'<div>{description}</div>'

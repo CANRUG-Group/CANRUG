@@ -45,7 +45,6 @@ def clean_description(description):
 def format_event_html(event):
     summary = html.escape(event.get('summary', 'Untitled Event'))
     description = event.get('description', '(No description provided)')
-    calendar_link = event.get('htmlLink', '')
     
     # Use the event's timezone
     event_tz = event.get('timeZone', 'UTC')
@@ -70,10 +69,6 @@ def format_event_html(event):
     html_output += f'<span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">—</span></p>'
     
     html_output += f'<div>{description}</div>'
-    
-    if calendar_link:
-        html_output += f'<p><a href="{calendar_link}" target="_blank" rel="noopener noreferrer nofollow">➕ Add to Google Calendar</a></p>'
-    
     html_output += '</article>\n'
     return html_output
 
@@ -103,8 +98,7 @@ def fetch_from_google_calendar():
                 'start': start_val,
                 'end': end_val,
                 'timeZone': start_node.get('timeZone', 'UTC'),
-                'description': clean_description(item.get('description', '')),
-                'htmlLink': item.get('htmlLink', '')
+                'description': clean_description(item.get('description', ''))
             })
         return processed
     except Exception as e:

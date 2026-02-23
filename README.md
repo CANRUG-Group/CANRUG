@@ -1,6 +1,6 @@
-# CANRUG Website
+# CanRUG Website
 
-Official website for the Canadian Regional User Group (CANRUG) - an Ex Libris user group for libraries across Canada.
+Official website for the Canadian Regional User Group (CanRUG) - an Ex Libris user group for libraries across Canada.
 
 ## Quick Start
 
@@ -76,4 +76,5 @@ See `README-LOCAL-TESTING.md` for detailed local testing instructions.
 
 ## License
 
-© 2024 CANRUG
+© 2024 CanRUG
+

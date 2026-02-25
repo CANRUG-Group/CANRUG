@@ -59,7 +59,7 @@ def format_event_html(event):
     
     html_output = '<article>'
     html_output += f'<h3>{summary}</h3>'
-    html_output += f'<p><strong>Time:</strong> <span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">{event_time_display}</span></p>'
+    html_output += f'<p><strong>Date and Time:</strong> <span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">{event_time_display}</span></p>'
     html_output += f'<div>{description}</div>'
     html_output += '</article>\n'
     return html_output
@@ -160,3 +160,4 @@ def generate_files():
 
 if __name__ == '__main__':
     generate_files()
+

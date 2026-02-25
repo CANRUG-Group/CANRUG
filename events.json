@@ -1,5 +1,13 @@
 {
-  "upcoming": [],
+  "upcoming": [
+    {
+      "summary": "CanRUG 2026 AGM (Save the date)",
+      "start": "2026-05-01",
+      "end": "2026-05-02",
+      "timeZone": "UTC",
+      "description": "More details to come"
+    }
+  ],
   "past": [
     {
       "summary": "2026 CanRUG Conference",

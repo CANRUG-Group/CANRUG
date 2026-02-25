@@ -67,7 +67,7 @@
         <p>&copy; 2024 CanRUG</p>
     </footer>
 
-    <script>
+<script>
     (function() {
         // Load events from the pre-generated HTML file
         fetch('_includes/events-upcoming.html')
@@ -96,6 +96,12 @@
                 const endISO = el.getAttribute('data-end');
                 
                 if (!startISO) return;
+
+                // Handle All-Day events: strings like "2026-05-01" have length 10.
+                // We do NOT convert these to local time, as they are "floating" dates.
+                if (startISO.length <= 10) {
+                    return; 
+                }
 
                 const startDate = new Date(startISO);
                 const endDate = new Date(endISO);
@@ -128,5 +134,4 @@
     })();
     </script>
 </body>
-
 </html>

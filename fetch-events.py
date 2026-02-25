@@ -45,28 +45,21 @@ def clean_description(description):
 def format_event_html(event):
     summary = html.escape(event.get('summary', 'Untitled Event'))
     description = event.get('description', '(No description provided)')
-    
-    # Use the event's timezone
-    event_tz = event.get('timeZone', 'UTC')
-    display_tz = event_tz.split('/')[-1].replace('_', ' ')
-
-    # Use the raw ISO strings directly for the data attributes
     start_iso = event['start']
     end_iso = event['end']
     
-    # Format the original "Event Time" for display
-    start_dt = datetime.fromisoformat(start_iso.replace('Z', '+00:00'))
-    end_dt = datetime.fromisoformat(end_iso.replace('Z', '+00:00'))
-    event_time_display = f"{start_dt.strftime('%b %d, %Y, %I:%M %p')} - {end_dt.strftime('%I:%M %p')}"
+    # Handle All-Day vs Timed for the display string
+    if len(start_iso) <= 10:
+        dt = datetime.fromisoformat(start_iso)
+        event_time_display = dt.strftime('%b %d, %Y (All Day)')
+    else:
+        start_dt = datetime.fromisoformat(start_iso.replace('Z', '+00:00'))
+        end_dt = datetime.fromisoformat(end_iso.replace('Z', '+00:00'))
+        event_time_display = f"{start_dt.strftime('%b %d, %Y, %I:%M %p')} - {end_dt.strftime('%I:%M %p')}"
     
-    # Build HTML with no leading/trailing whitespace
     html_output = '<article>'
     html_output += f'<h3>{summary}</h3>'
-    
-    # Output placeholder that JavaScript will fill in
-    html_output += '<p><strong>Time:</strong> '
-    html_output += f'<span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">—</span></p>'
-    
+    html_output += f'<p><strong>Time:</strong> <span class="js-local-time" data-start="{start_iso}" data-end="{end_iso}">{event_time_display}</span></p>'
     html_output += f'<div>{description}</div>'
     html_output += '</article>\n'
     return html_output
@@ -80,7 +73,7 @@ def fetch_from_google_calendar():
         params = {'key': API_KEY, 'singleEvents': 'true', 'orderBy': 'startTime', 'maxResults': 2500}
         response = requests.get(url, params=params)
         if response.status_code != 200:
-            print(f"❌ API request failed with status {response.status_code}")
+            print(f"❌ API request failed: {response.status_code}")
             return None
         
         data = response.json()
@@ -105,53 +98,65 @@ def fetch_from_google_calendar():
         return None
 
 def generate_files():
-    # Attempt to fetch from Google, fall back to current events.json if API fails
     events = fetch_from_google_calendar()
     if not events:
         print("⚠️ Failed to fetch from API, checking for local events.json...")
         if os.path.exists('events.json'):
-            with open('events.json', 'r') as f:
+            with open('events.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
+                # Combine lists and handle potential empty keys
                 events = data.get('upcoming', []) + data.get('past', [])
         else:
-            print("❌ No events found anywhere.")
+            print("❌ No events found.")
             return
 
+    # Use a timezone-aware 'now'
     now = datetime.now(timezone.utc)
     upcoming, past = [], []
     
     for e in events:
-        dt = datetime.fromisoformat(e['start'].replace('Z', '+00:00'))
-        if dt >= now:
-            upcoming.append(e)
-        else:
-            past.append(e)
-    
+        start_str = e['start']
+        try:
+            # Normalize to aware datetime
+            if len(start_str) <= 10:
+                # All-day event: YYYY-MM-DD -> Midnight UTC aware
+                dt = datetime.fromisoformat(start_str).replace(tzinfo=timezone.utc)
+            else:
+                # Timed event: handle Z or offsets
+                dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+                # If fromisoformat didn't produce an offset (rare with Google but safe), force it
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+            
+            if dt >= now:
+                upcoming.append(e)
+            else:
+                past.append(e)
+        except Exception as parse_error:
+            print(f"Skipping event '{e.get('summary')}' due to date error: {parse_error}")
+
+    # Sort past events newest to oldest
     past.sort(key=lambda x: x['start'], reverse=True)
 
     # Save to events.json
     with open('events.json', 'w', encoding='utf-8') as f:
         json.dump({'upcoming': upcoming, 'past': past}, f, indent=2)
-    print("✓ Updated events.json")
+    print(f"✓ Updated events.json ({len(upcoming)} upcoming, {len(past)} past)")
 
-    # Generate HTML snippets
+    # Generate HTML
     os.makedirs('_includes', exist_ok=True)
-    
     with open('_includes/events-upcoming.html', 'w', encoding='utf-8') as f:
         if upcoming:
-            for e in upcoming:
-                f.write(format_event_html(e))
+            for e in upcoming: f.write(format_event_html(e))
         else:
             f.write('<p>No upcoming events at this time.</p>\n')
-    print("✓ Generated _includes/events-upcoming.html")
-        
+            
     with open('_includes/events-past.html', 'w', encoding='utf-8') as f:
         if past:
-            for e in past:
-                f.write(format_event_html(e))
+            for e in past: f.write(format_event_html(e))
         else:
             f.write('<p>No past events to display.</p>\n')
-    print("✓ Generated _includes/events-past.html")
+    print("✓ Generated HTML snippets in _includes/")
 
 if __name__ == '__main__':
     generate_files()

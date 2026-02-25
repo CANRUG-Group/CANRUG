@@ -38,7 +38,7 @@
         <p>&copy; 2024 CanRUG</p>
     </footer>
 
-    <script>
+<script>
     (function() {
         // Load events from the pre-generated HTML file
         fetch('_includes/events-past.html')
@@ -61,6 +61,12 @@
                 const endISO = el.getAttribute('data-end');
                 
                 if (!startISO) return;
+
+                // FIX: Check if the string is just a date (YYYY-MM-DD)
+                // If it is, skip conversion to prevent timezone shifting.
+                if (startISO.length <= 10) {
+                    return; 
+                }
 
                 const startDate = new Date(startISO);
                 const endDate = new Date(endISO);
@@ -91,7 +97,8 @@
             });
         }
     })();
-    </script>
+</script>
 </body>
 
 </html>
+

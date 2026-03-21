@@ -2,9 +2,9 @@
   "upcoming": [
     {
       "summary": "CanRUG 2026 AGM (Save the date)",
-      "start": "2026-05-01",
-      "end": "2026-05-02",
-      "timeZone": "UTC",
+      "start": "2026-05-01T11:30:00-06:00",
+      "end": "2026-05-01T12:30:00-06:00",
+      "timeZone": "America/Edmonton",
       "description": "More details to come"
     }
   ],

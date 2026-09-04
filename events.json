@@ -1,5 +1,13 @@
 {
-  "upcoming": [],
+  "upcoming": [
+    {
+      "summary": "Canrug hangout number 1",
+      "start": "2026-09-18T11:30:00-06:00",
+      "end": "2026-09-18T12:30:00-06:00",
+      "timeZone": "America/New_York",
+      "description": "Come hang out and talk Ex Libris products with your fellow Canadians!\n"
+    }
+  ],
   "past": [
     {
       "summary": "CanRUG 2026 AGM",
